@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>Kalkulator Walut</title>
+</head>
+<body>
+    <div class="container">
+        <h2>Kalkulator Walut</h2>
+        <form action="" method="post">
+            <div class="form-group">
+                <label for="amount">Kwota:</label>
+                <input type="number" name="amount" placeholder="Wprowadź kwotę" required>
+            </div>
+            <div class="form-group">
+                <label for="from">Z:</label>
+                <select>
+                    <option value="pln">PLN</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="to">Do:</label>
+                <select name="to">
+                    {% for currency in currencies %}
+                    <option value="{{ currency }}">{{ currency }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn">Przelicz</button>
+        </form>
+        {% if result %}
+        <div class="result">
+            <p>Kwota w PLN: {{ "%.2f" % result }}</p>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>
