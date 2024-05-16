@@ -1,17 +1,22 @@
 import requests
 import csv
-from flask import Flask, render_template, request
+from flask import Flask, redirect, render_template, request
 
-response = requests.get("http://api.nbp.pl/api/exchangerates/tables/C?format=json")
-data = response.json()
-rates = data[0]["rates"]
-file_name = "rates.csv"
+def get_currency_data():
+    response = requests.get("http://api.nbp.pl/api/exchangerates/tables/C?format=json")
+    data = response.json()
+    return data
 
-with open(file_name, "w", newline="", encoding="utf-8") as csvfile:
-    writer = csv.DictWriter(csvfile, fieldnames=["currency", "code", "bid", "ask"], delimiter=";")
-    writer.writeheader()
-    for rate in rates:
-        writer.writerow(rate)
+def export_currency_to_file():
+    data = get_currency_data()
+    rates = data[0]["rates"]
+    file_name = "rates.csv"
+
+    with open(file_name, "w", newline="", encoding="utf-8") as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=["currency", "code", "bid", "ask"], delimiter=";")
+        writer.writeheader()
+        for rate in rates:
+            writer.writerow(rate)
 
 def load_currencies_from_csv(file_name):
     currencies = {}
@@ -29,12 +34,13 @@ def convert_currency(amount, to_currency, currencies):
     result = amount * exchange_rate
     return result
 
-currencies = load_currencies_from_csv('rates.csv')
+export_currency_to_file()
 
 app = Flask(__name__)
 
 @app.route('/calculator', methods=['GET', 'POST'])
 def currency_calculator():
+    currencies = load_currencies_from_csv('rates.csv')
     if request.method == 'GET':
        print("We received GET")
        return render_template("calculator_template.html", currencies=currencies)
@@ -44,6 +50,11 @@ def currency_calculator():
         to_currency = data[1]
         result = convert_currency(float(amount), to_currency, currencies)
         return  render_template("calculator_template.html", result=result, currencies=currencies)
+
+@app.route('/export', methods=['GET'])
+def export_to_csv():
+    export_currency_to_file()
+    return redirect('/calculator')
 
 if __name__ == '__main__':
     app.run(debug=True)
